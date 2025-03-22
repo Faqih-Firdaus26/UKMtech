@@ -4,10 +4,17 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MessageCircle, X, Send, Maximize2, Minimize2 } from "lucide-react"
+import { MessageCircle, X, Send, Maximize2, Minimize2, RefreshCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+
+// Update imports at the top to include AI SDK
+import { useChat } from "@ai-sdk/react"
+
+// Import Markdown components
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 // Typing animation component
 const TypingAnimation = ({ text }: { text: string }) => {
@@ -30,16 +37,63 @@ const TypingAnimation = ({ text }: { text: string }) => {
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<{ text: string; isUser: boolean; isTyping?: boolean }[]>([
-    { text: "Halo! Saya asisten virtual UKMtech. Ada yang bisa saya bantu?", isUser: false },
-  ])
-  const [inputValue, setInputValue] = useState("")
-  const [isTyping, setIsTyping] = useState(false)
+  // State untuk menampilkan error message
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const [demoMode, setDemoMode] = useState(false)
+  
+  // Gunakan hook useChat dari AI SDK
+  const {
+    messages: aiMessages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    error,
+    reload,
+    setMessages,
+    append
+  } = useChat({
+    api: "/api/chat", // Pastikan endpoint API sesuai
+    id: "ukm-chatbot", // Tambahkan ID unik untuk chatbot
+    initialMessages: [
+      { 
+        id: "initial-message", 
+        role: "assistant", 
+        content: "Halo! Saya asisten virtual UKMtech. Ada yang bisa saya bantu?" 
+      }
+    ],
+    onResponse: (response) => {
+      // Reset error jika respons berhasil
+      if (response.status === 200) {
+        setErrorMessage(null);
+        setRetryCount(0);
+        setDemoMode(false);
+      }
+    },
+    onError: (error) => {
+      console.error("Chatbot error:", error);
+      
+      // Set error message spesifik berdasarkan kode HTTP
+      if (error.message && error.message.includes("Failed to fetch")) {
+        setErrorMessage("Layanan AI tidak dapat dijangkau. Silakan periksa koneksi internet Anda dan coba lagi.");
+        // Aktifkan mode demo jika terjadi error koneksi
+        setDemoMode(true);
+      } else {
+        setErrorMessage("Maaf, ada masalah dengan layanan AI kami. Silakan coba lagi nanti.");
+        setDemoMode(true);
+      }
+    }
+  })
+  
   const [showTooltip, setShowTooltip] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
-  // Add state for chatbot size
-  const [chatSize, setChatSize] = useState("normal") // "small", "normal", "large"
+  
+  // Ganti dengan hanya satu state ukuran (true = besar, false = kecil)
+  const [isExpanded, setIsExpanded] = useState(true)
+  // Tambahkan state untuk animasi ketik
+  const [showTyping, setShowTyping] = useState(true)
 
   const toggleChat = () => {
     setIsOpen(!isOpen)
@@ -50,45 +104,17 @@ export default function Chatbot() {
     setShowTooltip(false)
   }
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (inputValue.trim() === "") return
-
-    // Add user message
-    const newMessages = [...messages, { text: inputValue, isUser: true }]
-    setMessages(newMessages)
-    setInputValue("")
-    setIsTyping(true)
-
-    // Simulate bot response after a short delay
-    setTimeout(() => {
-      const botResponses = [
-        "Terima kasih atas pertanyaan Anda. Saya akan membantu menjawabnya.",
-        "Anda dapat menemukan informasi lebih lanjut di halaman Edukasi kami.",
-        "Apakah ada hal lain yang ingin Anda tanyakan?",
-        "Untuk konsultasi lebih lanjut, Anda dapat menghubungi tim kami melalui halaman Hubungi Kami.",
-        "UKMtech menyediakan berbagai layanan untuk membantu UKM berkembang di era digital.",
-      ]
-      const randomResponse = botResponses[Math.floor(Math.random() * botResponses.length)]
-
-      setMessages([...newMessages, { text: randomResponse, isUser: false, isTyping: true }])
-      setIsTyping(false)
-
-      // After typing animation completes, mark as not typing
-      setTimeout(
-        () => {
-          setMessages((prev) => prev.map((msg, idx) => (idx === prev.length - 1 ? { ...msg, isTyping: false } : msg)))
-        },
-        randomResponse.length * 25 + 500,
-      ) // Adjust based on typing speed
-    }, 1000)
+  // Toggle ukuran chatbox
+  const toggleChatSize = () => {
+    setIsExpanded(!isExpanded)
   }
 
+  // Scroll ke bagian bawah chat ketika ada pesan baru
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages])
+  }, [aiMessages])
 
   // Show tooltip after page load
   useEffect(() => {
@@ -98,6 +124,167 @@ export default function Chatbot() {
 
     return () => clearTimeout(timer)
   }, [])
+
+  // Log error jika ada
+  useEffect(() => {
+    if (error) {
+      console.error("AI Chat error:", error);
+      
+      // Extract error message from response if available
+      if (typeof error === 'object' && error !== null) {
+        const errorMsg = getErrorMessage(error);
+        // Hanya mengatur pesan error jika berbeda dari yang sudah ada
+        if (errorMsg !== errorMessage) {
+          setErrorMessage(errorMsg);
+        }
+      } else if (!errorMessage) {
+        setErrorMessage("Terjadi kesalahan saat berkomunikasi dengan asisten AI.");
+      }
+    }
+  }, [error, errorMessage]);
+  
+  // Function to extract error message from error object
+  const getErrorMessage = (error: unknown): string => {
+    // Coba dapatkan pesan error dari beberapa tempat berbeda
+    if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+      // Deteksi HTML error response (biasanya dari server Next.js)
+      if (error.message.includes("<!DOCTYPE html>") || error.message.includes("<html")) {
+        return "Server mengalami masalah internal. Silakan coba lagi nanti.";
+      }
+      
+      // Potong pesan yang terlalu panjang
+      const maxLength = 100;
+      const message = error.message;
+      return `Error: ${message.length > maxLength ? message.substring(0, maxLength) + '...' : message}`;
+    }
+    
+    if (
+      error && 
+      typeof error === 'object' && 
+      'response' in error && 
+      error.response && 
+      typeof error.response === 'object' && 
+      'data' in error.response && 
+      error.response.data && 
+      typeof error.response.data === 'object' && 
+      'error' in error.response.data && 
+      typeof error.response.data.error === 'string'
+    ) {
+      return error.response.data.error;
+    }
+    
+    // Default error message
+    return "Terjadi kesalahan yang tidak diketahui. Silakan coba lagi nanti.";
+  };
+
+  // Atur animasi ketik untuk pesan baru
+  useEffect(() => {
+    // Aktifkan animasi ketik untuk setiap pesan baru dari asisten
+    if (aiMessages.length > 0 && aiMessages[aiMessages.length - 1].role === "assistant") {
+      setShowTyping(true)
+      
+      // Nonaktifkan animasi ketik setelah animasi selesai - buat waktu lebih pendek 
+      const messageLength = aiMessages[aiMessages.length - 1].content.length;
+      // Waktu minimum 1 detik, maksimum 5 detik
+      const typingTime = Math.min(Math.max(messageLength * 15, 1000), 5000);
+      
+      const timer = setTimeout(() => {
+        setShowTyping(false)
+      }, typingTime)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [aiMessages.length]) // Hanya jalankan effect ketika jumlah pesan berubah, bukan isi pesannya
+
+  // Fungsi untuk menangani pengiriman pesan dengan error handling
+  const handleSendWithErrorHandling = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!input.trim()) return;
+    
+    try {
+      // Jika dalam mode demo, buat respons palsu
+      if (demoMode) {
+        const userInput = input; // Simpan input sebelum direset
+        const demoResponses = [
+          "Sebagai demo, saya hanya bisa memberikan jawaban standar. Silakan atur GROQ_API_KEY di file .env untuk mengaktifkan respons AI sebenarnya.",
+          "Ini adalah mode demo. Untuk mengaktifkan AI sebenarnya, tambahkan kunci API Groq di file .env.",
+          "UKMtech menyediakan berbagai layanan untuk UKM. Ini adalah respons demo saja. Atur GROQ_API_KEY untuk jawaban yang lebih baik.",
+          "Mode demo aktif. Respons ini hanya placeholder - untuk respons AI yang sebenarnya, atur GROQ_API_KEY."
+        ];
+        
+        // Reset input terlebih dahulu untuk mencegah double submission
+        handleInputChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
+        
+        // Tambahkan pesan pengguna
+        append({
+          id: Date.now().toString(),
+          content: userInput,
+          role: "user"
+        });
+        
+        // Simulasi delay
+        setTimeout(() => {
+          append({
+            id: (Date.now() + 1).toString(),
+            content: demoResponses[Math.floor(Math.random() * demoResponses.length)],
+            role: "assistant"
+          });
+        }, 1000);
+        
+        return;
+      }
+      
+      handleSubmit(e);
+    } catch (err) {
+      console.error("Error mengirim pesan:", err);
+    }
+  }
+
+  // Coba kirim ulang pesan terakhir jika error
+  const handleRetry = () => {
+    // Hindari multiple clicks
+    if (isLoading) return;
+    
+    if (aiMessages.length > 0) {
+      // Ambil pesan terakhir dari pengguna jika ada
+      const lastUserMessageIndex = [...aiMessages].reverse().findIndex(m => m.role === "user");
+      
+      if (lastUserMessageIndex !== -1) {
+        // Filter pesan setelah user message terakhir
+        const filteredMessages = aiMessages.slice(0, aiMessages.length - lastUserMessageIndex);
+        
+        // Set pesan
+        setMessages(filteredMessages);
+        
+        // Coba kirim ulang dengan timeout kecil
+        setTimeout(() => {
+          try {
+            reload();
+            setRetryCount(prev => prev + 1);
+            setErrorMessage(null);
+          } catch (err) {
+            console.error("Error retrying:", err);
+            setErrorMessage("Gagal mencoba ulang. Silakan coba lagi nanti.");
+          }
+        }, 500);
+      }
+    }
+  };
+
+  // Fungsi untuk membuat chat baru
+  const handleNewChat = () => {
+    // Reset semua pesan kecuali pesan sambutan awal
+    setMessages([
+      { 
+        id: "initial-message", 
+        role: "assistant", 
+        content: "Halo! Saya asisten virtual UKMtech. Ada yang bisa saya bantu?" 
+      }
+    ]);
+    setErrorMessage(null);
+    setRetryCount(0);
+  };
 
   return (
     <>
@@ -119,7 +306,7 @@ export default function Chatbot() {
             <AnimatePresence>
               {showTooltip && (
                 <motion.div
-                  className="absolute bottom-20 right-0 bg-ukm-primary text-white p-3 rounded-lg shadow-lg max-w-[250px] text-sm"
+                  className="absolute bottom-20 right-0 bg-ukm-primary text-white p-3 rounded-lg shadow-lg w-[250px] text-sm"
                   initial={{ opacity: 0, scale: 0.8, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, y: 10 }}
@@ -191,15 +378,11 @@ export default function Chatbot() {
               })
             }}
           >
-            {/* Update the chat window size based on the chatSize state */}
+            {/* Update the chat window size based on isExpanded state */}
             <div
               className={cn(
                 "bg-white dark:bg-ukm-dark rounded-lg shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700",
-                chatSize === "small"
-                  ? "w-[280px]"
-                  : chatSize === "large"
-                    ? "w-[450px] sm:w-[500px]"
-                    : "w-[350px] sm:w-[400px]",
+                isExpanded ? "w-[400px]" : "w-[280px]",
               )}
             >
               {/* Chat Header */}
@@ -209,42 +392,22 @@ export default function Chatbot() {
                   <h3 className="font-medium">UKMtech Assistant</h3>
                 </div>
                 <div className="flex items-center space-x-2">
-                  {chatSize !== "small" && (
-                    <button
-                      onClick={() => setChatSize("small")}
-                      className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                      aria-label="Minimize chat"
-                    >
-                      <Minimize2 size={18} />
-                    </button>
-                  )}
-                  {chatSize === "normal" && (
-                    <button
-                      onClick={() => setChatSize("large")}
-                      className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                      aria-label="Maximize chat"
-                    >
-                      <Maximize2 size={18} />
-                    </button>
-                  )}
-                  {chatSize === "small" && (
-                    <button
-                      onClick={() => setChatSize("normal")}
-                      className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                      aria-label="Restore chat"
-                    >
-                      <Maximize2 size={18} />
-                    </button>
-                  )}
-                  {chatSize === "large" && (
-                    <button
-                      onClick={() => setChatSize("normal")}
-                      className="p-1 hover:bg-white/20 rounded-full transition-colors"
-                      aria-label="Restore chat"
-                    >
-                      <Minimize2 size={18} />
-                    </button>
-                  )}
+                  <button
+                    onClick={handleNewChat}
+                    className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                    aria-label="New Chat"
+                    title="Buat percakapan baru"
+                  >
+                    <RefreshCcw size={16} />
+                  </button>
+                  <button
+                    onClick={toggleChatSize}
+                    className="p-1 hover:bg-white/20 rounded-full transition-colors"
+                    aria-label={isExpanded ? "Minimize chat" : "Maximize chat"}
+                    title={isExpanded ? "Perkecil" : "Perbesar"}
+                  >
+                    {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                  </button>
                   <button
                     onClick={toggleChat}
                     className="p-1 hover:bg-white/20 rounded-full transition-colors"
@@ -255,21 +418,22 @@ export default function Chatbot() {
                 </div>
               </div>
 
-              {/* Chat Messages - adjust height based on size */}
+              {/* Chat Messages - adjust height based on isExpanded state */}
               <div
                 className={cn(
                   "p-4 overflow-y-auto bg-ukm-background dark:bg-gray-800",
-                  chatSize === "small" ? "h-[300px]" : chatSize === "large" ? "h-[500px]" : "h-[400px]",
+                  isExpanded ? "h-[450px]" : "h-[300px]",
                 )}
               >
                 <AnimatePresence initial={false}>
-                  {messages.map((message, index) => (
+                  {/* Tampilkan pesan dari AI SDK */}
+                  {aiMessages.map((message, index) => (
                     <motion.div
                       key={index}
                       initial={{
                         opacity: 0,
                         y: 20,
-                        x: message.isUser ? 20 : -20,
+                        x: message.role === "user" ? 20 : -20,
                       }}
                       animate={{
                         opacity: 1,
@@ -284,16 +448,27 @@ export default function Chatbot() {
                       }}
                       className={cn(
                         "mb-4 max-w-[80%] p-3 rounded-lg shadow-sm",
-                        message.isUser
+                        message.role === "user"
                           ? "ml-auto bg-ukm-primary text-white rounded-br-none"
-                          : "mr-auto bg-white dark:bg-gray-700 rounded-bl-none",
+                          : "mr-auto bg-white dark:bg-gray-700 rounded-bl-none prose prose-sm dark:prose-invert max-w-full",
                       )}
                     >
-                      {message.isTyping ? <TypingAnimation text={message.text} /> : message.text}
+                      {message.role === "user" ? (
+                        message.content
+                      ) : message.role === "assistant" && index === aiMessages.length - 1 && showTyping ? (
+                        <TypingAnimation text={message.content} />
+                      ) : (
+                        <div className="break-words prose prose-sm dark:prose-invert max-w-full">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                {isTyping && (
+                {/* Tampilkan animasi "sedang mengetik" ketika loading */}
+                {isLoading && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -313,20 +488,47 @@ export default function Chatbot() {
                     ></span>
                   </motion.div>
                 )}
+                {/* Tampilkan pesan error */}
+                {(error || errorMessage) && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mb-4 p-3 rounded-lg bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 max-w-[80%] mr-auto"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <p>{errorMessage || "Maaf, terjadi kesalahan. Silakan coba lagi."}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRetry}
+                        disabled={retryCount >= 3 || isLoading}
+                        className="self-start text-xs"
+                      >
+                        {isLoading ? "Mencoba ulang..." : "Coba lagi"}
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
               {/* Chat Input */}
-              <form onSubmit={handleSendMessage} className="p-4 border-t dark:border-gray-700">
+              <form onSubmit={handleSendWithErrorHandling} className="p-4 border-t dark:border-gray-700">
                 <div className="flex items-center">
+                  {/* Gunakan input dari AI SDK */}
                   <Input
                     type="text"
                     placeholder="Ketik pesan Anda..."
                     className="flex-1 mr-2 dark:bg-gray-800 dark:border-gray-700 focus-visible:ring-ukm-primary"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    value={input}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
                   />
-                  <Button type="submit" className="bg-ukm-primary hover:bg-ukm-primary/90 text-white">
+                  <Button 
+                    type="submit" 
+                    className="bg-ukm-primary hover:bg-ukm-primary/90 text-white"
+                    disabled={isLoading || !input.trim()}
+                  >
                     <Send size={18} />
                   </Button>
                 </div>

@@ -13,7 +13,7 @@ const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/edukasi", label: "Edukasi" },
   { href: "/konsultasi", label: "Konsultasi" },
-  { href: "/komunitas", label: "Komunitas" },
+  // { href: "/komunitas", label: "Komunitas" },
   { href: "/tentang", label: "Tentang" },
   { href: "/hubungi-kami", label: "Hubungi Kami" },
 ]
