@@ -6,8 +6,26 @@ import { ArrowRight, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ParallaxSection from "@/components/parallax-section"
 import EducationCard from "@/components/education-card"
+import { useState, useEffect } from "react"
 
-// Sample education data
+// Interface untuk data edukasi
+interface Education {
+  _id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  date: string;
+  duration: number | string;
+  instructor?: {
+    _id: string;
+    name: string;
+    image: string;
+  };
+  isActive: boolean;
+}
+
+// Sample education data untuk fallback
 const educationItems = [
   {
     id: "1",
@@ -46,6 +64,43 @@ const educationItems = [
 ]
 
 export default function Home() {
+  const [educations, setEducations] = useState<Education[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchEducations() {
+      try {
+        const response = await fetch('/api/education');
+        const data = await response.json();
+        
+        if (data.success) {
+          setEducations(data.data.slice(0, 3)); // Ambil 3 edukasi teratas
+        } else {
+          console.error("Failed to fetch educations:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching educations:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchEducations();
+  }, []);
+
+  // Format durasi function
+  function formatDuration(minutes: number): string {
+    if (minutes < 60) {
+      return `${minutes} menit baca`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return remainingMinutes > 0 
+        ? `${hours} jam ${remainingMinutes} menit baca` 
+        : `${hours} jam baca`;
+    }
+  }
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -288,17 +343,62 @@ export default function Home() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {educationItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <EducationCard {...item} />
-              </motion.div>
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 3 }).map((_, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="bg-white rounded-lg shadow-md p-4 animate-pulse"
+                >
+                  <div className="h-48 bg-gray-300 rounded-md mb-4"></div>
+                  <div className="h-6 bg-gray-300 rounded w-3/4 mb-3"></div>
+                  <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                  <div className="flex justify-between mt-4">
+                    <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+                  </div>
+                </motion.div>
+              ))
+            ) : educations.length > 0 ? (
+              // Data dari MongoDB
+              educations.map((item, index) => (
+                <motion.div
+                  key={item._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <EducationCard 
+                    id={item._id}
+                    title={item.title}
+                    description={item.description}
+                    image={item.image}
+                    category={item.category}
+                    date={item.date}
+                    duration={typeof item.duration === 'number' ? formatDuration(item.duration) : item.duration}
+                    instructor={item.instructor ? item.instructor.name : undefined}
+                  />
+                </motion.div>
+              ))
+            ) : (
+              // Data fallback
+              educationItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <EducationCard {...item} />
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -339,4 +439,3 @@ export default function Home() {
     </>
   )
 }
-

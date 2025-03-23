@@ -1,27 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import Image from "next/image"
 import Link from "next/link"
-import { Search, Filter } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import EducationCard from "@/components/education-card"
+import Image from "next/image"
 import ScrollReveal from "@/components/scroll-reveal"
+import Education from '@/models/Education'
 
-// Sample education data
+// Sample education data for fallback
 const educationItems = [
   {
-    id: "1",
-    title: "Digital Marketing untuk UKM",
-    description: "Pelajari strategi digital marketing yang efektif untuk mengembangkan bisnis UKM Anda di era digital.",
-    image:
-      "https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1474&q=80",
-    category: "Digital Marketing",
-    date: "10 Juni 2023",
-    duration: "8 Minggu",
-    instructor: "Budi Santoso",
+    id: 1,
+    title: "Cara Memulai Bisnis Online dengan Modal Minim",
+    description: "Pelajari strategi memulai bisnis online dengan modal minimal namun hasil maksimal",
+    image: "/images/edukasi-1.jpg",
+    category: "Pemasaran",
+    date: "10 Mei 2023",
+    duration: "15 menit baca",
   },
   {
     id: "2",
@@ -119,223 +114,266 @@ const educationItems = [
   },
 ]
 
-// Categories for filter
-const categories = [
-  "Semua",
-  "Digital Marketing",
-  "Keuangan",
-  "E-commerce",
-  "Branding",
-  "Strategi Bisnis",
-  "SDM",
-  "Pemasaran",
-  "Inovasi",
-]
+interface Education {
+  _id: string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  date: string;
+  duration: number | string;
+  instructor?: {
+    _id: string;
+    name: string;
+    image: string;
+  };
+  isActive: boolean;
+}
+
+interface FallbackEducation {
+  id: number | string;
+  title: string;
+  description: string;
+  image: string;
+  category: string;
+  date: string;
+  duration: string;
+  instructor?: string;
+}
 
 export default function EdukasiPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("Semua")
+  const [educations, setEducations] = useState<Education[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchEducations() {
+      try {
+        const response = await fetch('/api/education');
+        const data = await response.json();
+        
+        if (data.success) {
+          setEducations(data.data);
+        } else {
+          console.error("Failed to fetch educations:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching educations:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchEducations();
+  }, []);
+
+  // Format durasi function
+  function formatDuration(minutes: number): string {
+    if (minutes < 60) {
+      return `${minutes} menit baca`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return remainingMinutes > 0 
+        ? `${hours} jam ${remainingMinutes} menit baca` 
+        : `${hours} jam baca`;
+    }
+  }
 
   // Filter education items based on search term and selected category
-  const filteredItems = educationItems.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === "Semua" || item.category === selectedCategory
-    return matchesSearch && matchesCategory
-  })
+  const filteredItems = educations.length > 0 
+    ? educations.filter((item) => {
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesCategory = selectedCategory === "Semua" || item.category === selectedCategory
+        return matchesSearch && matchesCategory
+      })
+    : educationItems.filter((item) => {
+        const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesCategory = selectedCategory === "Semua" || item.category === selectedCategory
+        return matchesSearch && matchesCategory
+      });
+
+  const categories = ["Semua", "Pemasaran", "Keuangan", "Produksi", "Teknologi"];
 
   return (
-    <div className="pt-24 pb-20">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <motion.div
-          className="text-center max-w-3xl mx-auto mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-4xl font-bold mb-4">Edukasi UKM</h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Tingkatkan pengetahuan dan keterampilan Anda dengan berbagai materi edukasi yang dirancang khusus untuk UKM.
-          </p>
-        </motion.div>
+    <div className="container mx-auto px-4 py-12">
+      {/* Section title */}
+      <div className="text-center mb-12">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">Edukasi UMKM</h1>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Pelajari berbagai keterampilan dan pengetahuan untuk mengembangkan bisnis UMKM Anda.
+          Kami menyediakan berbagai artikel, tutorial, dan sumber daya edukasi untuk membantu Anda sukses.
+        </p>
+      </div>
 
-        {/* Featured Course */}
-        <motion.div
-          className="mb-16 relative rounded-xl overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          whileHover={{ scale: 1.01 }}
-        >
-          <div className="relative h-[400px] md:h-[500px]">
-            <Image
-              src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-              alt="Featured Course"
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 1200px"
+      {/* Search and filter */}
+      <div className="mb-10">
+        <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Cari edukasi..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-ukm-dark/80 to-transparent flex items-center">
-              <div className="p-8 md:p-12 max-w-2xl">
-                <motion.span
-                  className="bg-ukm-primary text-white px-3 py-1 rounded-full text-sm font-medium mb-4 inline-block"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  Kursus Unggulan
-                </motion.span>
-                <motion.h2
-                  className="text-3xl md:text-4xl font-bold text-white mb-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  Transformasi Digital untuk UKM
-                </motion.h2>
-                <motion.p
-                  className="text-white/90 mb-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  Pelajari strategi komprehensif untuk mentransformasi bisnis UKM Anda di era digital. Kursus ini
-                  mencakup digital marketing, e-commerce, manajemen operasional digital, dan strategi pertumbuhan.
-                </motion.p>
-                <motion.div
-                  className="flex flex-col sm:flex-row gap-4"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link href="/edukasi/10">
-                      <Button size="lg" className="bg-ukm-primary hover:bg-ukm-primary/90">
-                        Daftar Sekarang
-                      </Button>
-                    </Link>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link href="/edukasi/10">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="bg-white/10 backdrop-blur-sm text-white border-white hover:bg-white/20"
-                      >
-                        Lihat Detail
-                      </Button>
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Search and Filter */}
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Cari kursus..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+            <svg
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="text-gray-400" />
-              <select
-                className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ukm-primary dark:bg-gray-700 dark:border-gray-600"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
+            </svg>
           </div>
-        </motion.div>
 
-        {/* Education Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item, index) => (
-              <ScrollReveal key={item.id} direction="up" delay={0.1 * index} distance={30}>
-                <motion.div whileHover={{ y: -10 }} transition={{ type: "spring", stiffness: 300 }}>
-                  <EducationCard {...item} />
-                </motion.div>
-              </ScrollReveal>
-            ))
-          ) : (
-            <div className="col-span-3 text-center py-12">
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                Tidak ada kursus yang sesuai dengan kriteria pencarian Anda.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* CTA Section */}
-        <ScrollReveal direction="up" delay={0.3}>
-          <motion.div
-            className="mt-20 bg-ukm-dark text-white rounded-xl overflow-hidden"
-            whileHover={{ y: -5 }}
-            transition={{ type: "spring", stiffness: 200 }}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2">
-              <div className="p-12 flex flex-col justify-center">
-                <h2 className="text-3xl font-bold mb-6">Ingin Materi Edukasi Khusus?</h2>
-                <p className="text-lg mb-8">
-                  Kami dapat menyediakan materi edukasi yang disesuaikan dengan kebutuhan spesifik UKM Anda. Hubungi tim
-                  kami untuk informasi lebih lanjut.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link href="/hubungi-kami">
-                      <Button size="lg" className="bg-ukm-primary hover:bg-ukm-primary/90">
-                        Hubungi Kami
-                      </Button>
-                    </Link>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Link href="/konsultasi">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="border-ukm-secondary text-ukm-secondary hover:bg-ukm-secondary/10 dark:border-ukm-secondary dark:text-ukm-secondary"
-                      >
-                        Jadwalkan Konsultasi
-                      </Button>
-                    </Link>
-                  </motion.div>
-                </div>
-              </div>
-              <motion.div
-                className="relative h-[400px] lg:h-auto"
-                whileHover={{ scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <button
+                key={category}
+                className={`px-4 py-2 rounded-full text-sm font-medium ${
+                  selectedCategory === category
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                } transition-colors`}
+                onClick={() => setSelectedCategory(category)}
               >
-                <Image
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1471&q=80"
-                  alt="Custom Education"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-              </motion.div>
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Education cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {loading ? (
+          // Loading skeleton
+          Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-lg shadow-md p-4 animate-pulse">
+              <div className="h-48 bg-gray-300 rounded-md mb-4"></div>
+              <div className="h-6 bg-gray-300 rounded w-3/4 mb-3"></div>
+              <div className="h-4 bg-gray-300 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+              <div className="flex justify-between mt-4">
+                <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+              </div>
             </div>
-          </motion.div>
-        </ScrollReveal>
+          ))
+        ) : filteredItems.length > 0 ? (
+          filteredItems.map((item: Education | FallbackEducation, index) => (
+            <ScrollReveal key={'_id' in item ? item._id : item.id} direction="up" delay={0.1 * index} distance={30}>
+              <motion.div whileHover={{ y: -10 }} transition={{ type: "spring", stiffness: 300 }}>
+                {'_id' in item ? (
+                  // Real data from API
+                  <Link 
+                    href={`/edukasi/${item._id}`} 
+                    className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition duration-300"
+                  >
+                    <div className="relative h-48 w-full">
+                      <Image 
+                        src={item.image || '/images/education-placeholder.jpg'} 
+                        alt={item.title}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                      <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                        {item.category}
+                      </div>
+                    </div>
+                    
+                    <div className="p-5">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-2">{item.title}</h3>
+                      <p className="text-gray-600 mb-3 line-clamp-2">{item.description}</p>
+                      
+                      <div className="flex justify-between items-center text-sm text-gray-500">
+                        <div>
+                          <span className="mr-2">{new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                        <div>
+                          {typeof item.duration === 'number' 
+                            ? formatDuration(item.duration)
+                            : item.duration}
+                        </div>
+                      </div>
+                      
+                      {item.instructor && typeof item.instructor === 'object' && (
+                        <div className="mt-4 pt-3 border-t border-gray-100 flex items-center">
+                          <Link 
+                            href={`/instructor/${item.instructor._id}`}
+                            className="flex items-center hover:text-blue-600"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="w-8 h-8 rounded-full overflow-hidden relative mr-2">
+                              <Image 
+                                src={item.instructor.image || "/placeholder-avatar.jpg"}
+                                alt={item.instructor.name}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <span className="text-sm font-medium">{item.instructor.name}</span>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                ) : (
+                  // Fallback data
+                  <div className="block bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition duration-300">
+                    <div className="relative h-48 w-full">
+                      <Image 
+                        src={item.image || '/images/education-placeholder.jpg'} 
+                        alt={item.title}
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                      <div className="absolute top-3 right-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                        {item.category}
+                      </div>
+                    </div>
+                    
+                    <div className="p-5">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2 line-clamp-2">{item.title}</h3>
+                      <p className="text-gray-600 mb-3 line-clamp-2">{item.description}</p>
+                      
+                      <div className="flex justify-between items-center text-sm text-gray-500">
+                        <div>
+                          <span className="mr-2">{item.date}</span>
+                        </div>
+                        <div>{item.duration}</div>
+                      </div>
+                      
+                      {item.instructor && (
+                        <div className="mt-4 pt-3 border-t border-gray-100">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 bg-gray-200 rounded-full mr-2"></div>
+                            <span className="text-sm font-medium">{item.instructor}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </ScrollReveal>
+          ))
+        ) : (
+          <div className="col-span-full text-center py-16">
+            <h3 className="text-xl text-gray-600">Tidak ada konten edukasi yang sesuai</h3>
+            <p className="mt-2 text-gray-500">Coba ubah filter atau kata kunci pencarian Anda</p>
+          </div>
+        )}
       </div>
     </div>
   )

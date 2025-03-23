@@ -8,8 +8,52 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import ScrollReveal from "@/components/scroll-reveal"
 import AnimatedBackground from "@/components/animated-background"
+import { useState, FormEvent } from "react"
+import { showToast } from "@/lib/utils"
 
 export default function HubungiKamiPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Simulasi pengiriman data (ganti dengan API call sebenarnya)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Reset form setelah berhasil
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: ""
+      });
+      
+      // Tampilkan toast success
+      showToast.success("Pesan Anda berhasil dikirim! Tim kami akan segera menghubungi Anda.");
+    } catch (error) {
+      // Tampilkan toast error
+      showToast.error("Gagal mengirim pesan. Silakan coba lagi nanti.");
+      console.error("Error submitting form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="pt-24 pb-20 relative">
       <AnimatedBackground className="opacity-30 dark:opacity-10" />
@@ -34,42 +78,87 @@ export default function HubungiKamiPage() {
           <ScrollReveal direction="left">
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-8 rounded-xl shadow-lg">
               <h2 className="text-2xl font-bold mb-6">Kirim Pesan</h2>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="name" className="block mb-2 font-medium">
                       Nama Lengkap
                     </label>
-                    <Input id="name" placeholder="Masukkan nama lengkap Anda" required />
+                    <Input 
+                      id="name" 
+                      placeholder="Masukkan nama lengkap Anda" 
+                      required 
+                      value={formData.name}
+                      onChange={handleChange}
+                    />
                   </div>
                   <div>
                     <label htmlFor="email" className="block mb-2 font-medium">
                       Email
                     </label>
-                    <Input id="email" type="email" placeholder="Masukkan email Anda" required />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="Masukkan email Anda" 
+                      required 
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
                 <div>
                   <label htmlFor="phone" className="block mb-2 font-medium">
                     Nomor Telepon
                   </label>
-                  <Input id="phone" placeholder="Masukkan nomor telepon Anda" required />
+                  <Input 
+                    id="phone" 
+                    placeholder="Masukkan nomor telepon Anda" 
+                    required 
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <label htmlFor="subject" className="block mb-2 font-medium">
                     Subjek
                   </label>
-                  <Input id="subject" placeholder="Masukkan subjek pesan Anda" required />
+                  <Input 
+                    id="subject" 
+                    placeholder="Masukkan subjek pesan Anda" 
+                    required 
+                    value={formData.subject}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <label htmlFor="message" className="block mb-2 font-medium">
                     Pesan
                   </label>
-                  <Textarea id="message" placeholder="Tulis pesan Anda di sini" rows={6} required />
+                  <Textarea 
+                    id="message" 
+                    placeholder="Tulis pesan Anda di sini" 
+                    rows={6} 
+                    required 
+                    value={formData.message}
+                    onChange={handleChange}
+                  />
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button className="w-full bg-ukm-primary hover:bg-ukm-primary/90">
-                    <Send className="mr-2 h-4 w-4" /> Kirim Pesan
+                  <Button 
+                    className="w-full bg-ukm-primary hover:bg-ukm-primary/90"
+                    disabled={isSubmitting}
+                    type="submit"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-white"></div>
+                        Mengirim...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" /> Kirim Pesan
+                      </>
+                    )}
                   </Button>
                 </motion.div>
               </form>

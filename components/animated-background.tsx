@@ -34,8 +34,8 @@ export default function AnimatedBackground({ className = "" }: AnimatedBackgroun
       color: string
 
       constructor() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
+        this.x = canvas ? Math.random() * canvas.width : 0;
+        this.y = canvas ? Math.random() * canvas.height : 0;
         this.size = Math.random() * 3 + 1
         this.speedX = Math.random() * 1 - 0.5
         this.speedY = Math.random() * 1 - 0.5
@@ -45,6 +45,8 @@ export default function AnimatedBackground({ className = "" }: AnimatedBackgroun
       }
 
       update() {
+        if (!canvas) return;
+        
         this.x += this.speedX
         this.y += this.speedY
 

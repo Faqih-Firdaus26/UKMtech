@@ -20,131 +20,136 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 
-// Sample consultant data
-const consultants = [
+// Interface untuk data instructor
+interface Instructor {
+  _id: string;
+  name: string;
+  role?: string;
+  email?: string;
+  phone?: string;
+  image: string;
+  bio?: string;
+  expertise: string[];
+  social_media?: {
+    instagram?: string;
+  };
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Data dummy untuk testimonial (tidak ada di database)
+const testimonials = [
   {
-    id: "1",
-    name: "Budi Santoso",
-    role: "Konsultan Bisnis",
-    image:
-      "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    description:
-      "Budi Santoso adalah seorang konsultan bisnis berpengalaman dengan lebih dari 10 tahun pengalaman membantu UKM mengembangkan strategi bisnis yang efektif. Spesialisasi beliau mencakup perencanaan bisnis, analisis keuangan, dan strategi pertumbuhan.",
-    expertise: ["Strategi Bisnis", "Keuangan", "Operasional"],
-    experience: [
-      "Mantan Direktur Operasional di perusahaan konsultan terkemuka",
-      "Telah membantu lebih dari 100 UKM mengembangkan bisnis mereka",
-      "Pembicara reguler di seminar dan workshop bisnis",
-    ],
-    education: ["MBA dari Universitas Indonesia", "Sarjana Ekonomi dari Institut Teknologi Bandung"],
-    availability: [
-      { day: "Senin", time: "09:00 - 17:00" },
-      { day: "Selasa", time: "09:00 - 17:00" },
-      { day: "Rabu", time: "09:00 - 17:00" },
-      { day: "Kamis", time: "09:00 - 17:00" },
-      { day: "Jumat", time: "09:00 - 15:00" },
-    ],
-    testimonials: [
-      {
-        name: "Ahmad Rizki",
-        business: "Batik Nusantara",
-        text: "Konsultasi dengan Pak Budi sangat membantu bisnis saya. Beliau memberikan saran yang praktis dan mudah diimplementasikan.",
-      },
-      {
-        name: "Siti Rahma",
-        business: "Kopi Lokal",
-        text: "Berkat bimbingan Pak Budi, bisnis kopi saya berhasil meningkatkan omzet hingga 200% dalam 6 bulan.",
-      },
-    ],
+    name: "Ahmad Rizki",
+    business: "Batik Nusantara",
+    text: "Konsultasi dengan konsultan sangat membantu bisnis saya. Beliau memberikan saran yang praktis dan mudah diimplementasikan.",
   },
   {
-    id: "2",
     name: "Siti Rahma",
-    role: "Digital Marketing Specialist",
-    image:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80",
-    description:
-      "Siti Rahma adalah seorang spesialis digital marketing dengan pengalaman lebih dari 8 tahun dalam membantu UKM meningkatkan kehadiran online mereka. Spesialisasi beliau mencakup strategi media sosial, SEO, dan kampanye iklan online.",
-    expertise: ["Media Sosial", "SEO", "Content Marketing"],
-    experience: [
-      "Mantan Digital Marketing Manager di agensi digital terkemuka",
-      "Telah membantu lebih dari 80 UKM meningkatkan kehadiran online mereka",
-      "Pembicara di berbagai seminar digital marketing",
-    ],
-    education: [
-      "Master Marketing Digital dari Universitas Gadjah Mada",
-      "Sarjana Komunikasi dari Universitas Indonesia",
-    ],
-    availability: [
-      { day: "Senin", time: "10:00 - 18:00" },
-      { day: "Selasa", time: "10:00 - 18:00" },
-      { day: "Rabu", time: "10:00 - 18:00" },
-      { day: "Kamis", time: "10:00 - 18:00" },
-      { day: "Jumat", time: "10:00 - 16:00" },
-    ],
-    testimonials: [
-      {
-        name: "Dian Wijaya",
-        business: "Fashion Batik",
-        text: "Strategi media sosial yang disarankan oleh Bu Siti berhasil meningkatkan engagement dan penjualan produk fashion kami.",
-      },
-      {
-        name: "Hendra Kusuma",
-        business: "Toko Online Elektronik",
-        text: "Kampanye iklan online yang dirancang oleh Bu Siti sangat efektif dalam meningkatkan traffic dan konversi di toko online kami.",
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "Dian Wijaya",
-    role: "E-commerce Consultant",
-    image:
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-    description:
-      "Dian Wijaya adalah seorang konsultan e-commerce dengan pengalaman lebih dari 7 tahun dalam membantu UKM mengembangkan dan mengoptimalkan toko online mereka. Spesialisasi beliau mencakup strategi e-commerce, optimasi konversi, dan manajemen marketplace.",
-    expertise: ["Marketplace", "Toko Online", "Strategi Penjualan"],
-    experience: [
-      "Mantan Head of E-commerce di perusahaan retail terkemuka",
-      "Telah membantu lebih dari 60 UKM mengembangkan toko online mereka",
-      "Pembicara di berbagai seminar e-commerce",
-    ],
-    education: [
-      "Master Manajemen dari Institut Teknologi Bandung",
-      "Sarjana Teknik Informatika dari Universitas Gadjah Mada",
-    ],
-    availability: [
-      { day: "Senin", time: "09:00 - 17:00" },
-      { day: "Selasa", time: "09:00 - 17:00" },
-      { day: "Rabu", time: "09:00 - 17:00" },
-      { day: "Kamis", time: "09:00 - 17:00" },
-      { day: "Jumat", time: "09:00 - 15:00" },
-    ],
-    testimonials: [
-      {
-        name: "Rina Wijaya",
-        business: "Kerajinan Bambu",
-        text: "Berkat konsultasi dengan Pak Dian, toko online kami berhasil meningkatkan penjualan hingga 150% dalam 3 bulan.",
-      },
-      {
-        name: "Andi Pratama",
-        business: "Fashion Lokal",
-        text: "Strategi marketplace yang disarankan oleh Pak Dian sangat efektif dalam meningkatkan visibilitas dan penjualan produk kami.",
-      },
-    ],
+    business: "Kopi Lokal",
+    text: "Berkat bimbingan konsultan, bisnis kopi saya berhasil meningkatkan omzet hingga 200% dalam 6 bulan.",
   },
 ]
 
-export default function KonsultanDetailPage({ params }: { params: { id: string } }) {
+// Jadwal ketersediaan default (tidak ada di database)
+const defaultAvailability = [
+  { day: "Senin", time: "09:00 - 17:00" },
+  { day: "Selasa", time: "09:00 - 17:00" },
+  { day: "Rabu", time: "09:00 - 17:00" },
+  { day: "Kamis", time: "09:00 - 17:00" },
+  { day: "Jumat", time: "09:00 - 15:00" },
+]
+
+export default function KonsultanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
   const [isContactDialogOpen, setIsContactDialogOpen] = useState(false)
-  const consultant = consultants.find((item) => item.id === params.id)
+  const [instructor, setInstructor] = useState<Instructor | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [relatedInstructors, setRelatedInstructors] = useState<Instructor[]>([])
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [])
+    
+    async function fetchInstructor() {
+      try {
+        const resolvedParams = await params;
+        // Ambil data instruktur berdasarkan ID
+        const response = await fetch(`/api/instructor/${resolvedParams.id}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setInstructor(data.data);
+          
+          // Ambil instruktur lain dengan keahlian yang sama
+          const expertsResponse = await fetch(`/api/instructor?expertise=${encodeURIComponent(data.data.expertise[0] || '')}`);
+          const expertsData = await expertsResponse.json();
+          
+          if (expertsData.success) {
+            // Filter untuk menghilangkan instruktur saat ini dan ambil maksimal 3 instruktur terkait
+            const related = expertsData.data.filter((item: Instructor) => item._id !== data.data._id).slice(0, 3);
+            setRelatedInstructors(related);
+          }
+        } else {
+          console.error("Failed to fetch instructor:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching instructor:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  if (!consultant) {
+    fetchInstructor();
+  }, [params])
+
+  if (loading) {
+    return (
+      <div className="pt-24 pb-20">
+        <div className="container mx-auto px-4">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-300 w-1/4 mb-6 rounded"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+              <div className="lg:col-span-1">
+                <div className="h-80 bg-gray-300 rounded-xl mb-6"></div>
+                <div className="bg-gray-200 p-6 rounded-xl">
+                  <div className="h-8 bg-gray-300 w-2/3 mb-2 rounded"></div>
+                  <div className="h-4 bg-gray-300 w-1/2 mb-4 rounded"></div>
+                  <div className="flex gap-2 mb-6">
+                    <div className="h-6 bg-gray-300 w-20 rounded-full"></div>
+                    <div className="h-6 bg-gray-300 w-20 rounded-full"></div>
+                  </div>
+                  <div className="h-10 bg-gray-300 w-full mb-4 rounded"></div>
+                  <div className="h-10 bg-gray-300 w-full rounded"></div>
+                </div>
+              </div>
+              <div className="lg:col-span-2">
+                <div className="h-10 bg-gray-300 w-1/3 mb-6 rounded"></div>
+                <div className="h-4 bg-gray-300 w-full mb-2 rounded"></div>
+                <div className="h-4 bg-gray-300 w-full mb-2 rounded"></div>
+                <div className="h-4 bg-gray-300 w-2/3 mb-8 rounded"></div>
+                
+                <div className="h-6 bg-gray-300 w-1/4 mb-3 rounded"></div>
+                <div className="space-y-2 mb-6">
+                  <div className="h-4 bg-gray-300 w-full rounded"></div>
+                  <div className="h-4 bg-gray-300 w-full rounded"></div>
+                  <div className="h-4 bg-gray-300 w-4/5 rounded"></div>
+                </div>
+                
+                <div className="h-6 bg-gray-300 w-1/4 mb-3 rounded"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-300 w-full rounded"></div>
+                  <div className="h-4 bg-gray-300 w-3/4 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!instructor) {
     return (
       <div className="pt-24 pb-20 text-center">
         <div className="container mx-auto px-4">
@@ -158,6 +163,9 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
     )
   }
 
+  // Buat pengalaman berdasarkan bio jika tidak ada data khusus
+  const experiences = instructor.bio ? instructor.bio.split('. ').filter(Boolean).map(sentence => sentence + '.') : [];
+  
   return (
     <div className="pt-24 pb-20">
       <div className="container mx-auto px-4">
@@ -186,18 +194,18 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
           >
             <div className="relative h-80 w-full rounded-xl overflow-hidden mb-6">
               <Image
-                src={consultant.image || "/placeholder.svg"}
-                alt={consultant.name}
+                src={instructor.image || "/placeholder.svg"}
+                alt={instructor.name}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 33vw"
               />
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-bold mb-2">{consultant.name}</h2>
-              <p className="text-ukm-primary font-medium mb-4">{consultant.role}</p>
+              <h2 className="text-2xl font-bold mb-2">{instructor.name}</h2>
+              <p className="text-ukm-primary font-medium mb-4">{instructor.role}</p>
               <div className="flex flex-wrap gap-2 mb-6">
-                {consultant.expertise.map((skill, i) => (
+                {instructor.expertise.map((skill, i) => (
                   <Badge key={i} className="bg-ukm-primary/10 text-ukm-primary hover:bg-ukm-primary/20">
                     {skill}
                   </Badge>
@@ -211,7 +219,7 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
                   <DialogHeader>
                     <DialogTitle className="text-2xl">Jadwalkan Konsultasi</DialogTitle>
                     <DialogDescription>
-                      Pilih tanggal dan waktu untuk konsultasi dengan {consultant.name}
+                      Pilih tanggal dan waktu untuk konsultasi dengan {instructor.name}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -272,9 +280,9 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
                 </DialogTrigger>
                 <DialogContent className="bg-white">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl">Hubungi {consultant.name}</DialogTitle>
+                    <DialogTitle className="text-2xl">Hubungi {instructor.name}</DialogTitle>
                     <DialogDescription>
-                      Kirim pesan kepada {consultant.name} untuk informasi lebih lanjut
+                      Kirim pesan kepada {instructor.name} untuk informasi lebih lanjut
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -320,28 +328,35 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-3xl font-bold mb-6">Profil Konsultan</h1>
-            <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">{consultant.description}</p>
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">{instructor.bio}</p>
 
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-semibold mb-3">Pengalaman</h3>
                 <ul className="space-y-2">
-                  {consultant.experience.map((exp, i) => (
-                    <li key={i} className="flex items-start">
+                  {experiences.length > 0 ? (
+                    experiences.slice(0, 3).map((exp, i) => (
+                      <li key={i} className="flex items-start">
+                        <CheckCircle className="text-ukm-primary mr-3 mt-1 flex-shrink-0" />
+                        <span>{exp}</span>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="flex items-start">
                       <CheckCircle className="text-ukm-primary mr-3 mt-1 flex-shrink-0" />
-                      <span>{exp}</span>
+                      <span>Berpengalaman dalam {instructor.expertise.join(", ")}</span>
                     </li>
-                  ))}
+                  )}
                 </ul>
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-3">Pendidikan</h3>
+                <h3 className="text-xl font-semibold mb-3">Keahlian</h3>
                 <ul className="space-y-2">
-                  {consultant.education.map((edu, i) => (
+                  {instructor.expertise.map((skill, i) => (
                     <li key={i} className="flex items-start">
                       <Award className="text-ukm-primary mr-3 mt-1 flex-shrink-0" />
-                      <span>{edu}</span>
+                      <span>{skill}</span>
                     </li>
                   ))}
                 </ul>
@@ -364,7 +379,7 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
             <TabsContent value="availability" className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
               <h2 className="text-2xl font-semibold mb-6">Jadwal Ketersediaan</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {consultant.availability.map((slot, index) => (
+                {defaultAvailability.map((slot, index) => (
                   <div key={index} className="p-4 border rounded-lg hover:border-ukm-primary transition-colors">
                     <div className="flex items-center">
                       <div className="bg-ukm-primary/10 text-ukm-primary font-semibold rounded-full w-10 h-10 flex items-center justify-center mr-4">
@@ -390,9 +405,9 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
             <TabsContent value="testimonials" className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
               <h2 className="text-2xl font-semibold mb-6">Testimoni Klien</h2>
               <div className="space-y-6">
-                {consultant.testimonials.map((testimonial, index) => (
+                {testimonials.map((testimonial, index) => (
                   <div key={index} className="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl">
-                    <p className="italic mb-4">"{testimonial.text}"</p>
+                    <p className="italic mb-4">&ldquo;{testimonial.text}&rdquo;</p>
                     <div className="flex items-center">
                       <div className="bg-ukm-primary/10 text-ukm-primary font-semibold rounded-full w-10 h-10 flex items-center justify-center mr-4">
                         <User size={18} />
@@ -410,19 +425,18 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
         </motion.div>
 
         {/* Related Consultants */}
-        <motion.div
-          className="mt-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <h2 className="text-2xl font-bold mb-8">Konsultan Lainnya</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {consultants
-              .filter((item) => item.id !== consultant.id)
-              .map((item, index) => (
+        {relatedInstructors.length > 0 && (
+          <motion.div
+            className="mt-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <h2 className="text-2xl font-bold mb-8">Konsultan Lainnya</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {relatedInstructors.map((item, index) => (
                 <motion.div
-                  key={item.id}
+                  key={item._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
@@ -441,20 +455,21 @@ export default function KonsultanDetailPage({ params }: { params: { id: string }
                     <h3 className="text-xl font-semibold mb-1">{item.name}</h3>
                     <p className="text-ukm-primary font-medium mb-4">{item.role}</p>
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {item.expertise.map((skill, i) => (
+                      {item.expertise.slice(0, 3).map((skill, i) => (
                         <span key={i} className="bg-ukm-primary/10 text-ukm-primary text-sm px-3 py-1 rounded-full">
                           {skill}
                         </span>
                       ))}
                     </div>
-                    <Link href={`/konsultasi/${item.id}`}>
+                    <Link href={`/konsultasi/${item._id}`}>
                       <Button className="w-full bg-ukm-primary hover:bg-ukm-primary/90">Lihat Profil</Button>
                     </Link>
                   </div>
                 </motion.div>
               ))}
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   )
