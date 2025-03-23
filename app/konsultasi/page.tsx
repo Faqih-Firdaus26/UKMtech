@@ -271,7 +271,7 @@ export default function KonsultasiPage() {
         {/* Filter Section */}
         <div className="mb-10">
           <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-            <div className="relative flex-grow">
+            {/* <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <Input
                 type="text"
@@ -280,8 +280,8 @@ export default function KonsultasiPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
-            <div className="flex flex-wrap gap-2">
+            </div> */}
+            {/* <div className="flex flex-wrap gap-2">
               {expertiseList.map((expertise) => (
                 <Button
                   key={expertise}
@@ -296,7 +296,7 @@ export default function KonsultasiPage() {
                   {expertise}
                 </Button>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
 

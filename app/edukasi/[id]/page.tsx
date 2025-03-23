@@ -94,7 +94,7 @@ async function getEducationById(id: string): Promise<IEducation | null> {
       instructorDetails: instructorDetails,
       content: educationDoc.content,
       benefits: educationDoc.benefits,
-      target_audience: educationDoc.target_audience?.join(', ') || '',
+      target_audience: educationDoc.target_audience,
       isActive: educationDoc.isActive,
       createdAt: educationDoc.createdAt,
       updatedAt: educationDoc.updatedAt

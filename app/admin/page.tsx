@@ -3,11 +3,11 @@ import { ArrowRight } from "lucide-react";
 
 export default function AdminPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto min-h-[500px] px-4 py-8">
       <h1 className="text-2xl font-bold mb-8">Panel Admin UKMtech</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Link
+        {/* <Link
           href="/admin/products"
           className="flex flex-col p-6 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
         >
@@ -19,7 +19,7 @@ export default function AdminPage() {
             Kelola Produk
             <ArrowRight size={16} className="ml-1" />
           </div>
-        </Link>
+        </Link> */}
 
         <Link
           href="/admin/education"
@@ -49,7 +49,7 @@ export default function AdminPage() {
           </div>
         </Link>
 
-        <Link
+        {/* <Link
           href="/admin/users"
           className="flex flex-col p-6 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
         >
@@ -61,7 +61,7 @@ export default function AdminPage() {
             Kelola Pengguna
             <ArrowRight size={16} className="ml-1" />
           </div>
-        </Link>
+        </Link> */}
       </div>
     </div>
   );

@@ -13,7 +13,12 @@ interface Education {
   category: string;
   date: string;
   duration: number;
-  instructor: string;
+  instructor: string | {
+    _id: string;
+    name: string;
+    image: string;
+    expertise: string[];
+  };
   image: string;
   isActive: boolean;
   createdAt: string;
@@ -66,8 +71,8 @@ export default function EducationAdminPage() {
       
       if (data.success) {
         setEducations(data.data);
-        setTotalPages(data.pagination.totalPages);
-        setTotalItems(data.pagination.totalItems);
+        setTotalPages(data.totalPages);
+        setTotalItems(data.total);
       } else {
         setError(data.message || "Terjadi kesalahan saat mengambil data edukasi");
       }
@@ -301,7 +306,9 @@ export default function EducationAdminPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {education.instructor || "-"}
+                      {typeof education.instructor === 'string' 
+                        ? education.instructor || "-" 
+                        : education.instructor?.name || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
