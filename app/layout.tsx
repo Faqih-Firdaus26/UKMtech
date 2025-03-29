@@ -8,6 +8,7 @@ import Chatbot from "@/components/chatbot"
 import Footer from "@/components/footer"
 import ScrollToTop from "@/components/scroll-to-top"
 import PageTransition from "./page-transition"
+import { Toaster } from "react-hot-toast"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -34,6 +35,30 @@ export default function RootLayout({
           <Footer />
           <Chatbot />
           <ScrollToTop />
+          <Toaster 
+            position="top-center"
+            toastOptions={{
+              duration: 5000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: '#10B981',
+                  secondary: '#FFFFFF',
+                },
+              },
+              error: {
+                duration: 5000,
+                iconTheme: {
+                  primary: '#EF4444',
+                  secondary: '#FFFFFF',
+                },
+              },
+            }}
+          />
         </ThemeProvider>
       </body>
     </html>

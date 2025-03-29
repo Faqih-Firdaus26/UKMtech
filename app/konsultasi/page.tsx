@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, FormEvent, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { Calendar, Clock, Users, CheckCircle } from "lucide-react"
+import { Calendar, Clock, Users, CheckCircle, Search, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -18,9 +19,100 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { showToast } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+
+// Interface untuk data konsultan
+interface Instructor {
+  _id: string;
+  name: string;
+  role?: string;
+  email?: string;
+  phone?: string;
+  image: string;
+  bio?: string;
+  expertise: string[];
+  social_media?: {
+    instagram?: string;
+  };
+  isActive: boolean;
+}
+
+// Interface untuk item dari dummy data
+interface DummyConsultant {
+  id: string;
+  name: string;
+  role: string;
+  image: string;
+  expertise: string[];
+}
+
+// Data dummy sebagai fallback
+const dummyConsultants: DummyConsultant[] = [
+  {
+    id: "1",
+    name: "Budi Santoso",
+    role: "Konsultan Bisnis",
+    image:
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+    expertise: ["Strategi Bisnis", "Keuangan", "Operasional"],
+  },
+  {
+    id: "2",
+    name: "Siti Rahma",
+    role: "Digital Marketing Specialist",
+    image:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80",
+    expertise: ["Media Sosial", "SEO", "Content Marketing"],
+  },
+  {
+    id: "3",
+    name: "Dian Wijaya",
+    role: "E-commerce Consultant",
+    image:
+      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+    expertise: ["Marketplace", "Toko Online", "Strategi Penjualan"],
+  },
+  {
+    id: "4",
+    name: "Rina Wijaya",
+    role: "Business Development",
+    image:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=761&q=80",
+    expertise: ["Pengembangan Bisnis", "Networking", "Investasi"],
+  },
+  {
+    id: "5",
+    name: "Ahmad Rizki",
+    role: "Finance Consultant",
+    image:
+      "https://images.unsplash.com/photo-1600486913747-55e5470d6f40?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
+    expertise: ["Manajemen Keuangan", "Perpajakan", "Investasi"],
+  },
+  {
+    id: "6",
+    name: "Hendra Kusuma",
+    role: "Production Consultant",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+    expertise: ["Manajemen Produksi", "Rantai Pasok", "Optimasi Produksi"],
+  },
+]
 
 export default function KonsultasiPage() {
   const [selectedConsultation, setSelectedConsultation] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    consultationType: "",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [instructors, setInstructors] = useState<Instructor[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedExpertise, setSelectedExpertise] = useState("Semua")
 
   const consultationTypes = [
     {
@@ -51,32 +143,114 @@ export default function KonsultasiPage() {
     },
   ]
 
-  const consultants = [
-    {
-      id: "1",
-      name: "Budi Santoso",
-      role: "Konsultan Bisnis",
-      image:
-        "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-      expertise: ["Strategi Bisnis", "Keuangan", "Operasional"],
-    },
-    {
-      id: "2",
-      name: "Siti Rahma",
-      role: "Digital Marketing Specialist",
-      image:
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80",
-      expertise: ["Media Sosial", "SEO", "Content Marketing"],
-    },
-    {
-      id: "3",
-      name: "Dian Wijaya",
-      role: "E-commerce Consultant",
-      image:
-        "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-      expertise: ["Marketplace", "Toko Online", "Strategi Penjualan"],
-    },
-  ]
+  useEffect(() => {
+    async function fetchInstructors() {
+      try {
+        const response = await fetch('/api/instructor');
+        const data = await response.json();
+        
+        if (data.success) {
+          setInstructors(data.data);
+        } else {
+          console.error("Failed to fetch instructors:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching instructors:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchInstructors();
+  }, []);
+
+  // Mendapatkan semua kategori keahlian dari data konsultan
+  const getAllExpertise = () => {
+    const expertise = new Set<string>()
+    expertise.add("Semua")
+
+    if (instructors.length > 0) {
+      instructors.forEach((instructor) => {
+        instructor.expertise?.forEach((skill) => {
+          expertise.add(skill)
+        })
+      })
+    } else {
+      dummyConsultants.forEach((consultant) => {
+        consultant.expertise.forEach((skill) => {
+          expertise.add(skill)
+        })
+      })
+    }
+
+    return Array.from(expertise)
+  }
+
+  // Filter konsultan berdasarkan pencarian dan keahlian
+  const getFilteredConsultants = () => {
+    // Tentukan tipe data untuk hasil filtered
+    let filtered: (Instructor | DummyConsultant)[] = instructors.length > 0 
+      ? instructors as Instructor[] 
+      : dummyConsultants as DummyConsultant[];
+
+    // Filter berdasarkan pencarian
+    if (searchTerm) {
+      filtered = filtered.filter((consultant) =>
+        consultant.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter berdasarkan keahlian
+    if (selectedExpertise !== "Semua") {
+      filtered = filtered.filter((consultant) => {
+        if ('expertise' in consultant && Array.isArray(consultant.expertise)) {
+          return consultant.expertise.includes(selectedExpertise);
+        }
+        return false;
+      });
+    }
+
+    return filtered;
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [id === "consultation-type" ? "consultationType" : id]: value 
+    }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Simulasi pengiriman data (ganti dengan API call sebenarnya)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Reset form setelah berhasil
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        consultationType: "",
+        message: ""
+      });
+      
+      // Tampilkan toast success
+      showToast.success("Permintaan konsultasi Anda berhasil dikirim! Tim kami akan segera menghubungi Anda.");
+    } catch (error) {
+      // Tampilkan toast error
+      showToast.error("Gagal mengirim permintaan konsultasi. Silakan coba lagi nanti.");
+      console.error("Error submitting form:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const filteredConsultants = getFilteredConsultants()
+  const expertiseList = getAllExpertise()
 
   return (
     <div className="pt-24 pb-20">
@@ -93,6 +267,38 @@ export default function KonsultasiPage() {
             Dapatkan saran dan strategi dari para pakar untuk mengembangkan bisnis UKM Anda ke level berikutnya.
           </p>
         </motion.div>
+
+        {/* Filter Section */}
+        <div className="mb-10">
+          <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+            {/* <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Input
+                type="text"
+                placeholder="Cari konsultan..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div> */}
+            {/* <div className="flex flex-wrap gap-2">
+              {expertiseList.map((expertise) => (
+                <Button
+                  key={expertise}
+                  variant={selectedExpertise === expertise ? "default" : "outline"}
+                  className={
+                    selectedExpertise === expertise
+                      ? "bg-ukm-primary text-white hover:bg-ukm-primary/90"
+                      : "text-gray-700 hover:text-ukm-primary hover:border-ukm-primary"
+                  }
+                  onClick={() => setSelectedExpertise(expertise)}
+                >
+                  {expertise}
+                </Button>
+              ))}
+            </div> */}
+          </div>
+        </div>
 
         {/* Consultation Types */}
         <motion.div
@@ -141,7 +347,9 @@ export default function KonsultasiPage() {
                   </DialogTrigger>
                   <DialogContent className="bg-white dark:bg-gray-800">
                     <DialogHeader>
-                      <DialogTitle className="text-2xl">Jadwalkan Konsultasi {type.title}</DialogTitle>
+                      <DialogTitle className="text-2xl">
+                        Jadwalkan Konsultasi {consultationTypes.find(type => type.id === selectedConsultation)?.title || ""}
+                      </DialogTitle>
                       <DialogDescription>Pilih tanggal dan waktu yang sesuai untuk konsultasi Anda.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -232,38 +440,75 @@ export default function KonsultasiPage() {
         >
           <h2 className="text-3xl font-bold text-center mb-12">Konsultan Kami</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {consultants.map((consultant, index) => (
-              <motion.div
-                key={index}
-                className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                whileHover={{ y: -10 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <div className="relative h-64 w-full">
-                  <Image
-                    src={consultant.image || "/placeholder.svg"}
-                    alt={consultant.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-1">{consultant.name}</h3>
-                  <p className="text-ukm-primary font-medium mb-4">{consultant.role}</p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {consultant.expertise.map((skill, i) => (
-                      <span key={i} className="bg-ukm-primary/10 text-ukm-primary text-sm px-3 py-1 rounded-full">
-                        {skill}
-                      </span>
-                    ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 animate-pulse">
+                  <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                  <div className="h-6 bg-gray-300 rounded w-3/4 mx-auto mb-3"></div>
+                  <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto mb-4"></div>
+                  <div className="flex justify-center gap-2 mb-4">
+                    <div className="h-6 bg-gray-300 rounded w-20"></div>
+                    <div className="h-6 bg-gray-300 rounded w-20"></div>
                   </div>
-                  <Link href={`/konsultasi/${consultant.id}`}>
-                    <Button className="w-full bg-ukm-primary hover:bg-ukm-primary/90">Lihat Profil</Button>
-                  </Link>
+                  <div className="h-10 bg-gray-300 rounded w-full"></div>
                 </div>
-              </motion.div>
-            ))}
+              ))
+            ) : filteredConsultants.length > 0 ? (
+              filteredConsultants.map((consultant, index) => {
+                // Type guard untuk memisahkan Instructor vs DummyConsultant
+                const id = '_id' in consultant ? consultant._id : consultant.id;
+                const name = consultant.name;
+                const image = consultant.image;
+                const role = 'role' in consultant ? consultant.role : 
+                  (consultant.expertise && consultant.expertise.length > 0 ? 
+                  consultant.expertise[0] + " Specialist" : "Konsultan");
+                const expertise = consultant.expertise || [];
+                
+                return (
+                  <motion.div
+                    key={id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all"
+                  >
+                    <div className="p-6 text-center">
+                      <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 relative">
+                        <Image
+                          src={image}
+                          alt={name}
+                          fill
+                          style={{ objectFit: "cover" }}
+                        />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-1">{name}</h3>
+                      <p className="text-ukm-primary text-sm font-medium mb-4">{role}</p>
+                      <div className="flex flex-wrap justify-center gap-2 mb-4">
+                        {expertise.slice(0, 2).map((skill, i) => (
+                          <Badge key={i} className="bg-ukm-primary/10 text-ukm-primary hover:bg-ukm-primary/20">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {expertise.length > 2 && (
+                          <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200">
+                            +{expertise.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                      <Link href={`/konsultasi/${id}`}>
+                        <Button className="w-full bg-ukm-primary hover:bg-ukm-primary/90">Lihat Profil</Button>
+                      </Link>
+                    </div>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="col-span-full text-center py-16">
+                <h3 className="text-xl text-gray-600">Tidak ada konsultan yang sesuai</h3>
+                <p className="mt-2 text-gray-500">Coba ubah filter atau kata kunci pencarian Anda</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -282,26 +527,45 @@ export default function KonsultasiPage() {
                 Isi formulir di bawah ini untuk menghubungi tim kami dan mendapatkan informasi lebih lanjut tentang
                 layanan konsultasi kami.
               </p>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="name" className="block mb-2 font-medium">
                       Nama Lengkap
                     </label>
-                    <Input id="name" placeholder="Masukkan nama lengkap Anda" required />
+                    <Input 
+                      id="name" 
+                      placeholder="Masukkan nama lengkap Anda" 
+                      required 
+                      value={formData.name}
+                      onChange={handleChange}
+                    />
                   </div>
                   <div>
                     <label htmlFor="email" className="block mb-2 font-medium">
                       Email
                     </label>
-                    <Input id="email" type="email" placeholder="Masukkan email Anda" required />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      placeholder="Masukkan email Anda" 
+                      required 
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
                 <div>
                   <label htmlFor="phone" className="block mb-2 font-medium">
                     Nomor Telepon
                   </label>
-                  <Input id="phone" placeholder="Masukkan nomor telepon Anda" required />
+                  <Input 
+                    id="phone" 
+                    placeholder="Masukkan nomor telepon Anda" 
+                    required 
+                    value={formData.phone}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <label htmlFor="consultation-type" className="block mb-2 font-medium">
@@ -311,6 +575,8 @@ export default function KonsultasiPage() {
                     id="consultation-type"
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ukm-primary"
                     required
+                    value={formData.consultationType}
+                    onChange={handleChange}
                   >
                     <option value="">Pilih Jenis Konsultasi</option>
                     <option value="business">Konsultasi Bisnis</option>
@@ -322,9 +588,29 @@ export default function KonsultasiPage() {
                   <label htmlFor="message" className="block mb-2 font-medium">
                     Pesan
                   </label>
-                  <Textarea id="message" placeholder="Ceritakan tentang kebutuhan konsultasi Anda" rows={4} required />
+                  <Textarea 
+                    id="message" 
+                    placeholder="Ceritakan tentang kebutuhan konsultasi Anda" 
+                    rows={4} 
+                    required 
+                    value={formData.message}
+                    onChange={handleChange}
+                  />
                 </div>
-                <Button className="w-full bg-ukm-primary hover:bg-ukm-primary/90">Kirim Pesan</Button>
+                <Button 
+                  className="w-full bg-ukm-primary hover:bg-ukm-primary/90"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="h-4 w-4 mr-2 animate-spin rounded-full border-b-2 border-white"></div>
+                      Mengirim...
+                    </>
+                  ) : (
+                    "Kirim Pesan"
+                  )}
+                </Button>
               </form>
             </div>
             <div className="bg-ukm-dark p-8 lg:p-12 text-white flex flex-col justify-center">
