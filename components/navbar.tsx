@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation"
 const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/edukasi", label: "Edukasi" },
-  { href: "/instructor", label: "Instruktur" },
+  // { href: "/instructor", label: "Instruktur" },
   { href: "/konsultasi", label: "Konsultasi" },
   { href: "/tentang", label: "Tentang" },
   { href: "/hubungi-kami", label: "Hubungi Kami" },

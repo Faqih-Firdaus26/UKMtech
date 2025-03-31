@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "UKMtech - Platform Edukasi dan Konsultasi UKM",
   description:
     "Platform edukasi dan konsultasi terpercaya untuk membantu UKM Indonesia berkembang dan bersaing di era digital.",
+  other: {
+      "dicoding:email": "firdausfaqih727@gmail.com",
+    },
 }
 
 export default function RootLayout({
